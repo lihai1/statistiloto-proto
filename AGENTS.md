@@ -6,9 +6,11 @@ the `.proto` definition and google API annotations — no generated code, no bui
 ## Contents
 
 - `lottery.proto` — the contract. Package `lottery.v1`.
-  - Service `LotteryService`: `HealthCheck`, `GenerateForm`, `GetStatistics`, `Analyze`.
+  - Service `LotteryService`: `HealthCheck`, `GenerateForm`, `GetStatistics`, `Analyze`, `Simulate`.
   - Messages: `DateWindow`, `GenerateFormRequest/Response`, `GetStatisticsRequest/Response`,
-    `AnalyzeRequest/Response`, `Pair`, `NumberSet`, `FrequencyGroup/Entry`, health types.
+    `AnalyzeRequest/Response`, `Pair`, `NumberSet`, `FrequencyGroup/Entry`, health types,
+    `SimulateRequest/Response`, `SimulateTierHit`, `SimulateDrawResult`,
+    `SimulateTierSummary`, `SimulateSummary`.
   - Enum `Strength` (WEAK/STRONG).
   - Go package: `github.com/lihai1/stat-tree-server/pkg/gen;lotteryv1`.
   - Java package: `com.statistiloto.lottery.v1`.

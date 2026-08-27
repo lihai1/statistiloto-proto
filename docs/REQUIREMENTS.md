@@ -50,6 +50,18 @@ This document defines the requirements for the `statistiloto-proto` contract —
 - **Response:** `AnalyzeResponse` — `frequency_groups` (repeated `FrequencyGroup`), `archive_size` (int32).
 - **Requirement:** Evaluates the user's selected numbers against historical winning draws. `frequency_groups` contains one entry per group size (1–6), each with `size`, `combos` (C(37, size)), and `entries` sorted by count descending.
 
+### 2.5 Simulate
+- **Signature:** `rpc Simulate(SimulateRequest) returns (SimulateResponse)`
+- **REST:** `POST /api/generate/simulate` (`body: "*"`)
+- **Request:** `SimulateRequest` — `form` (repeated int32, 6/8/10/12 numbers for systematic forms), `strong` (int32, 1–7 or 0 = none), `window` (optional `DateWindow`), `ticket_cost` (double, default 3.0 ILS), `prize_amounts` (repeated double, length 0 or 8 — per-tier prize overrides).
+- **Response:** `SimulateResponse` — `draws` (repeated `SimulateDrawResult`, ordered by `draw_date` ascending), `summary` (`SimulateSummary`).
+- **Messages:**
+  - `SimulateTierHit` — `tier` (int32, 1–8), `hits` (int32), `amount_per_hit` (double), `total` (double).
+  - `SimulateDrawResult` — `draw_number`, `draw_date` (Timestamp), `winning_numbers` (repeated int32), `winning_strong` (int32), `tier_hits` (repeated `SimulateTierHit`), `prize_won` (double), `ticket_cost` (double), `used_real_prizes` (bool).
+  - `SimulateTierSummary` — `tier` (int32), `label` (string), `total_hits` (int32), `total_amount` (double).
+  - `SimulateSummary` — `total_draws`, `total_combinations`, `total_spent`, `total_won`, `net` (all double/int32), `tier_summaries` (repeated `SimulateTierSummary`, always 8 entries), `draws_with_real_prizes` (int32).
+- **Requirement:** Backtests a user's ticket against every historical draw in the optional date window. For systematic forms (N > 6), all C(N,6) combinations are played per draw. Prize amounts use scraped per-draw data when available (Go `lottery_results.prize_amounts`), falling back to service defaults or user-supplied `prize_amounts` overrides. `used_real_prizes` / `draws_with_real_prizes` indicate the prize source.
+
 ## 3. Backward Compatibility Requirements
 
 - **Field numbers are permanent.** Never reuse or renumber an existing field number.
@@ -87,7 +99,7 @@ This document defines the requirements for the `statistiloto-proto` contract —
 
 - All REST mappings are defined via `google.api.http` annotations inside `lottery.proto` — never in a separate config file.
 - `HealthCheck` maps to `GET /health`.
-- `GenerateForm`, `GetStatistics`, and `Analyze` map to `POST` endpoints under `/api/generate/...` with `body: "*"`.
+- `GenerateForm`, `GetStatistics`, `Analyze`, and `Simulate` map to `POST` endpoints under `/api/generate/...` with `body: "*"`.
 - The gRPC-Gateway reverse-proxy must be run by the Go service so the same contract is exposed over REST/JSON for HTTP clients.
 - REST paths are part of the public contract; changing a path is a breaking change requiring a major version bump.
 - `third_party/google/api/annotations.proto` must be vendored so the annotations resolve without external dependencies.
