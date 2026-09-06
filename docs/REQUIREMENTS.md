@@ -40,8 +40,8 @@ This document defines the requirements for the `statistiloto-proto` contract —
 - **Signature:** `rpc GetStatistics(GetStatisticsRequest) returns (GetStatisticsResponse)`
 - **REST:** `POST /api/generate/pares` (`body: "*"`)
 - **Request:** `GetStatisticsRequest` — `how_many`, `form_type`, `window` (optional), `strength`.
-- **Response:** `GetStatisticsResponse` — `pairs` (repeated `Pair`, each with `numbers` and `count`).
-- **Requirement:** Computes the top `how_many` frequent number pairs/groups over the optional date window.
+- **Response:** `GetStatisticsResponse` — `pairs` (repeated `Pair`, each with `numbers` and `count`), `total_draws_in_range` (int32 — number of historical draws in the requested date window).
+- **Requirement:** Computes the top `how_many` frequent number pairs/groups over the optional date window. The response includes `total_draws_in_range` so callers can display the sample size alongside the statistics.
 
 ### 2.4 Analyze
 - **Signature:** `rpc Analyze(AnalyzeRequest) returns (AnalyzeResponse)`
@@ -88,8 +88,11 @@ This document defines the requirements for the `statistiloto-proto` contract —
 
 ### 4.3 Python
 - Command: `python -m grpc_tools.protoc` with `-I.` and `-I third_party`.
-- Output: `--python_out` and `--grpc_python_out` into `./gen/python`.
-- Used for scripting, testing, and data-analysis tooling.
+- Output: `--python_out` and `--grpc_python_out` into `./gen/python` (or
+  `agent/app/gen/` when run via the orchestrator's `make proto-python`).
+- Used by the Python agent service for gRPC calls to the Go lottery service.
+- From the orchestrator root: `make proto-python` (uses the agent runtime
+  image which has `grpc_tools` installed).
 
 ### 4.4 General
 - All three generators must be run from the same `lottery.proto` revision. Generated code must never be hand-edited.

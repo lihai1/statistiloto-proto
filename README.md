@@ -83,6 +83,7 @@ The list of frequent pairs/groups.
 | Field | Type | Description |
 |-------|------|-------------|
 | `pairs` | `repeated Pair` | Frequent number pairs/groups. |
+| `total_draws_in_range` | `int32` | Number of historical draws in the requested date window. |
 
 ### `AnalyzeRequest`
 Mirrors the original `FormAnalyzeCalculations` model.
