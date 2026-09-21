@@ -45,6 +45,7 @@ flowchart LR
 | `GenerateForm` | BFF → Go | Generate number combinations |
 | `GetStatistics` | BFF → Go | Frequent pairs/groups |
 | `Analyze` | BFF → Go | Evaluate user form vs. history |
+| `ScoreForm` | BFF → Go | Absolute pair-heat score for a form |
 
 ## 3. REST Gateway Flow
 
@@ -52,7 +53,7 @@ The Go service runs the gRPC-Gateway reverse-proxy, translating HTTP/JSON reques
 
 ```mermaid
 flowchart LR
-    HTTP["HTTP Client"] -->|"POST /api/generate/form\nPOST /api/generate/pares\nPOST /api/generate/analyze\nGET /health"| Gateway["gRPC-Gateway\n(reverse-proxy, Go)"]
+    HTTP["HTTP Client"] -->|"POST /api/generate/form\nPOST /api/generate/pares\nPOST /api/generate/analyze\nPOST /api/score/form\nGET /health"| Gateway["gRPC-Gateway\n(reverse-proxy, Go)"]
     Gateway -->|"translate JSON → proto\n→ gRPC call"| GoService["Go Lottery Service\n(gRPC server)"]
     GoService -->|"gRPC response\n(proto message)"| Gateway
     Gateway -->|"translate proto → JSON\n→ HTTP response"| HTTP
@@ -65,3 +66,5 @@ flowchart LR
 | `POST` | `/api/generate/form` | `GenerateForm` | `*` |
 | `POST` | `/api/generate/pares` | `GetStatistics` | `*` |
 | `POST` | `/api/generate/analyze` | `Analyze` | `*` |
+| `POST` | `/api/score/form` | `ScoreForm` | `*` |
+| `POST` | `/api/generate/simulate` | `Simulate` | `*` |

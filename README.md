@@ -20,6 +20,8 @@ Package: `lottery.v1`
 | `GenerateForm` | `GenerateFormRequest` | `GenerateFormResponse` | `POST /api/generate/form` | Generates lottery number combinations based on historical-draw patterns over an optional date window. |
 | `GetStatistics` | `GetStatisticsRequest` | `GetStatisticsResponse` | `POST /api/generate/pares` | Calculates frequent number pairs/groups over a date window. |
 | `Analyze` | `AnalyzeRequest` | `AnalyzeResponse` | `POST /api/generate/analyze` | Evaluates user-selected numbers against historical winning draws. |
+| `ScoreForm` | `ScoreFormRequest` | `ScoreFormResponse` | `POST /api/score/form` | Computes an absolute pair-heat index for a form (100 = random historical expectation). |
+| `Simulate` | `SimulateRequest` | `SimulateResponse` | `POST /api/generate/simulate` | Backtests a user's ticket against historical draws, reporting per-draw and total ticket cost vs. prizes won. |
 
 All `POST` endpoints use `body: "*"` (the entire JSON request body maps to the request message).
 
@@ -70,12 +72,13 @@ Mirrors the original `statsCalculations` model.
 | `strength` | `Strength` | Strength mode (strong/weak pair statistics). |
 
 ### `Pair`
+
 A frequent number group with its occurrence count.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `numbers` | `repeated int32` | The numbers in the group. |
-| `count` | `int32` | Occurrence count in the archive. |
+| Field     | Type            | Description                      |
+|-----------|-----------------|----------------------------------|
+| `numbers` | `repeated int32` | The numbers in the group.        |
+| `count`   | `int32`         | Occurrence count in the archive. |
 
 ### `GetStatisticsResponse`
 The list of frequent pairs/groups.
@@ -110,13 +113,35 @@ One number combination and its occurrence count.
 | `count` | `int32` | How many times this combination appeared in the archive. |
 
 ### `FrequencyGroup`
+
 Holds all frequency entries for a specific group size.
+
+| Field     | Type                        | Description                                                         |
+|-----------|-----------------------------|---------------------------------------------------------------------|
+| `size`    | `int32`                     | Group size: 1 = single number, 2 = pair, 3 = triple, etc.           |
+| `combos`  | `int32`                     | Total possible combinations for this group size (C(37, size)).      |
+| `entries` | `repeated FrequencyEntry`   | Frequency entries in this group, sorted by count descending.        |
+
+### `ScoreFormRequest`
+
+Carries the numbers to score plus an optional window.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `size` | `int32` | Group size: 1 = single number, 2 = pair, 3 = triple, etc. |
-| `combos` | `int32` | Total possible combinations for this group size (C(37, size)). |
-| `entries` | `repeated FrequencyEntry` | Frequency entries in this group, sorted by count descending. |
+| `form` | `repeated int32` | The user's selected numbers to score (at least 2). |
+| `window` | `DateWindow` | Optional historical window. |
+
+### `ScoreFormResponse`
+
+The absolute heat index plus its raw components.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `heat` | `double` | `observed_pair_hits / expected_pair_hits × 100`. 100 = random average; above/below 100 = historically above/below expected. Descriptive, not predictive. |
+| `observed_pair_hits` | `int64` | Sum of occurrence counts of the set's pairs in the window. |
+| `expected_pair_hits` | `double` | `draws × C(len(form),2) × C(6,2) / C(MaxNumber,2)`. |
+| `draws` | `int32` | Number of draws in the archive window. |
+| `pair_count` | `int32` | C(len(form), 2) — number of pairs the score averages over. |
 
 ### `HealthCheckRequest`
 Empty request for the health check. No fields.

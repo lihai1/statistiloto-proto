@@ -5,6 +5,7 @@ This document defines the requirements for the `statistiloto-proto` contract —
 ## 1. Contract Requirements
 
 ### 1.1 Single Source of Truth
+
 - `lottery.proto` is the **single source of truth** for the service contract.
 - No service may duplicate or hand-write message definitions that exist in the proto. All clients and servers must consume generated code.
 - The proto must be the only place where RPC names, request/response shapes, field numbers, and REST mappings are defined.
@@ -62,6 +63,13 @@ This document defines the requirements for the `statistiloto-proto` contract —
   - `SimulateSummary` — `total_draws`, `total_combinations`, `total_spent`, `total_won`, `net` (all double/int32), `tier_summaries` (repeated `SimulateTierSummary`, always 8 entries), `draws_with_real_prizes` (int32).
 - **Requirement:** Backtests a user's ticket against every historical draw in the optional date window. For systematic forms (N > 6), all C(N,6) combinations are played per draw. Prize amounts use scraped per-draw data when available (Go `lottery_results.prize_amounts`), falling back to service defaults or user-supplied `prize_amounts` overrides. `used_real_prizes` / `draws_with_real_prizes` indicate the prize source.
 
+### 2.6 ScoreForm
+- **Signature:** `rpc ScoreForm(ScoreFormRequest) returns (ScoreFormResponse)`
+- **REST:** `POST /api/score/form` (`body: "*"`)
+- **Request:** `ScoreFormRequest` — `form` (repeated int32, at least 2 numbers), `window` (optional `DateWindow`).
+- **Response:** `ScoreFormResponse` — `heat` (double), `observed_pair_hits` (int64), `expected_pair_hits` (double), `draws` (int32), `pair_count` (int32).
+- **Requirement:** Computes an absolute "heat index" for a form: observed pair co-occurrences vs. the random expectation over the archive window (×100). `heat = observed_pair_hits / expected_pair_hits × 100`, where `expected_pair_hits = draws × C(len(form),2) × C(6,2) / C(MaxNumber,2)`. 100 means the set's pair frequency equals the random average; values above/below 100 are historically above/below expected. Descriptive only — not predictive. Forms with fewer than 2 numbers are rejected with `InvalidArgument`.
+
 ## 3. Backward Compatibility Requirements
 
 - **Field numbers are permanent.** Never reuse or renumber an existing field number.
@@ -103,6 +111,7 @@ This document defines the requirements for the `statistiloto-proto` contract —
 - All REST mappings are defined via `google.api.http` annotations inside `lottery.proto` — never in a separate config file.
 - `HealthCheck` maps to `GET /health`.
 - `GenerateForm`, `GetStatistics`, `Analyze`, and `Simulate` map to `POST` endpoints under `/api/generate/...` with `body: "*"`.
+- `ScoreForm` maps to `POST /api/score/form` with `body: "*"`.
 - The gRPC-Gateway reverse-proxy must be run by the Go service so the same contract is exposed over REST/JSON for HTTP clients.
 - REST paths are part of the public contract; changing a path is a breaking change requiring a major version bump.
 - `third_party/google/api/annotations.proto` must be vendored so the annotations resolve without external dependencies.
